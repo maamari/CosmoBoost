@@ -1,19 +1,22 @@
 import cosmoboost as cb
+import numpy as np
+import healpy as hp
+import matplotlib.pyplot as plt
 
 pars = cb.DEFAULT_PARS
 
-lmax=pars['lmax']=5000
+lmax=pars['lmax']=3000
 delta_ell = pars['delta_ell']=8
 beta=pars['beta']
 T_0 = pars["T_0"]
 
-pars['d']=0
-pars['method']='analytic'
-kernel_a = cb.Kernel(pars, save_kernel=False, overwrite=True)
-
 pars['d']=1
 pars["method"] = "numerical"
 kernel_n = cb.Kernel(pars, save_kernel=False, overwrite=True)
+
+pars['d']=0
+pars['method']='analytic'
+kernel_a = cb.Kernel(pars, save_kernel=False, overwrite=True)
 
 m=0
 L = 501 
@@ -167,11 +170,11 @@ lon_pix, lat_pix = hp.pix2ang(NSIDE,np.arange(NPIX),lonlat=True)
 mask_60,f_sky = mask_cutbelowlat(0,lat_pix)
 
 boost_ang = -(lat_pix-90.)
-hp.mollview(boost_ang)
+# hp.mollview(boost_ang)
 
 cos_map = np.cos(np.deg2rad(boost_ang))*mask_60
 ones_map = np.ones_like(lat_pix)*mask_60
-hp.mollview(cos_map)
+# hp.mollview(cos_map)
 cos_avg = np.sum(cos_map)/np.sum(ones_map)
 cos_avg
 #jeong.jeong_boost_Cl()
@@ -192,8 +195,8 @@ T_map_b_n = hp.alm2map(alm_T_b_n,NSIDE)
 T_map_b_a_ma = mask_60*T_map_b_a
 T_map_b_n_ma = mask_60*T_map_b_n
 
-hp.mollview(mask_60, sub=221,title="Mask")
-hp.mollview(T_map_r_ma, sub=222,title="CMB")
+# hp.mollview(mask_60, sub=221,title="Mask")
+# hp.mollview(T_map_r_ma, sub=222,title="CMB")
 
 Cl_TT_r_ma =(1/f_sky)*hp.anafast(T_map_r_ma,lmax=lmax)
 
@@ -220,10 +223,10 @@ dCl_Cl_TT_b_jeong = Cl_TT_jeong/Cl_TT_r
 
 dCl_Cl_TT_b_jeong_GF = GF(dCl_Cl_TT_b_jeong, dL, mode="constant")
 
-plt.plot(ell,100*(dCl_Cl_TT_b_n_ma),linewidth=0.5,alpha=0.7,color="tab:orange",label="boosted and masked $a_{\ell m}$")
+# plt.plot(ell,100*(dCl_Cl_TT_b_n_ma),linewidth=0.5,alpha=0.7,color="tab:orange",label="boosted and masked $a_{\ell m}$")
 plt.plot(ell,100*(dCl_Cl_TT_b_n_ma_GF),linewidth=5,color="tab:orange",label="Gaussian smoothed")
 
-plt.plot(ell,100*(dCl_Cl_TT_b_a_ma),linewidth=0.5,alpha=0.7,color="tab:blue",label="boosted and masked $a_{\ell m}$")
+# plt.plot(ell,100*(dCl_Cl_TT_b_a_ma),linewidth=0.5,alpha=0.7,color="tab:blue",label="boosted and masked $a_{\ell m}$")
 plt.plot(ell,100*(dCl_Cl_TT_b_a_ma_GF),linewidth=3, ls="--", color="tab:blue",label="Gaussian smoothed")
 
 plt.plot(ell,100*(dCl_Cl_TT_b_jeong_GF),linewidth=2,color="tab:red",label="Jeong")
@@ -236,5 +239,4 @@ plt.legend()
 
 plt.ylim(-1,1)
 plt.xlim(100,lmax)
-plt.show()
 plt.savefig("dcl_cl.png")
