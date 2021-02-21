@@ -36,7 +36,8 @@ DEFAULT_PARS = {
     'derivative_dnu'      : 1.0,  # resolution of frequency derivative in GHz
     'normalize'           : True,  # normalize to temperature units
     'frequency_function'  : "CMB",
-    'method'              : 'analytic'  # set to 'numerical' for scipy.odeint solver
+    'method'              : 'ODE'  # set to 'ODE' to use scipy.odeint solver
+                                         # set to 'Bessel' to use Bessel function approx.
     }
 
 # TODO: add custom frequency function
@@ -98,8 +99,9 @@ class Kernel(object):
         # TODO: add private safe ell_max parameter
 
         # dictionary for various kernel solvers
-        self.solver = {'analytic': KernelODE.est_K_T_ODE, 'numerical': KernelODE.solve_K_T_ODE}
+        self.solver = {'Bessel': KernelODE.est_K_T_ODE, 'ODE': KernelODE.solve_K_T_ODE}
 
+        # TODO: move this to a private mathod self._set_delta_ell
         # set delta_ell
         safe_delta_ell = np.min((4, np.round(self.beta * (2 * self.lmax))))
         try:
@@ -130,7 +132,7 @@ class Kernel(object):
             'lmax'          : self.lmax,
             'delta_ell'     : self.delta_ell,
             'T_0'           : self.T_0,  # Kelvins
-            'beta_exp_order': self.beta_exp_order,
+            'beta_expansion_order': self.beta_exp_order,
             'derivative_dnu': self.derivative_dnu,
             'normalize'     : self.normalize,
             'method'        : self.method
@@ -154,11 +156,13 @@ class Kernel(object):
         """initialize the kernel matrices"""
 
         # check to see if the file exists
+        # if it does, load it
         if fh.file_exists(self.matrices_filename) and self.overwrite is False:
 
             print("\nMatrices loaded from file:\n{}\n".format(self.matrices_filename))
             self._load_matrices()
 
+        # otherwise calculate the matrices and save them to file
         else:
             print("Calculating the index matrices...\n")
             self.Mmatrix, self.Lmatrix = mh.get_ML_matrix(self.delta_ell, self.lmax)
@@ -251,7 +255,10 @@ class Kernel(object):
             K_mLl = fh.load_kernel(self.kernel_filename, key='D1')
         else:
             print("Solving kernel ODE for d=1")
-            K_mLl = self.solver[self.method](self.pars, save_kernel=self.save_kernel)
+            try:
+                K_mLl = self.solver[self.method](self.pars, save_kernel=self.save_kernel)
+            except KeyError as e :
+                raise type(e)(f"'{self.method}' is not a valid key. Use one of the following: {self.solver.keys()}")
 
         return K_mLl
 
@@ -259,16 +266,18 @@ class Kernel(object):
         """return the DC aberration kernel elements K^m_{\ell' \ell} for d!=1
         if the kernel has been calculated before, it will be loaded
         otherwise it will be calculated using the ODE"""
-        if fh.file_exists(self.kernel_filename) and self.overwrite is False:
-            print("Using Kernel for d=1 from file")
-            #self._mLl_d1 = fh.load_kernel(self.kernel_filename, key='D1')
-        else:
-            #print("Solving kernel ODE for d=1")
-            #self._mLl_d1 = self._get_mLl_d1()
 
-            _K_d_mLl = kr.get_K_d(self, self.d, self.s)
+        # if fh.file_exists(self.kernel_filename) and self.overwrite is False:
+        #     print("Using Kernel for d=1 from file")
+        #     # FIXME: should this be removed?
+        #     #self._mLl_d1 = fh.load_kernel(self.kernel_filename, key='D1')
+        # else:
+        #     #print("Solving kernel ODE for d=1")
+        #     #self._mLl_d1 = self._get_mLl_d1()
 
-        #pdb.set_trace()
+
+        _K_d_mLl = kr.get_K_d(self, self.d, self.s)
+
         return _K_d_mLl
 
     def nu_mLl(self, nu):
