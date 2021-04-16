@@ -30,7 +30,7 @@ DEFAULT_PARS = {
     'beta'                : 0.00123,  # dimensionless velocity
     'lmin'                : 0,  # minimum ell mode
     'lmax'                : 1000,  # maximum ell mode
-    'delta_ell'           : 6,  # number of ell neighbors on each side
+    'delta_ell'           : None,  # number of ell neighbors on each side
     'T_0'                 : 2.72548,  # Kelvins
     'beta_expansion_order': 4,  # expansion order of beta
     'derivative_dnu'      : 1.0,  # resolution of frequency derivative in GHz
@@ -101,17 +101,13 @@ class Kernel(object):
         # dictionary for various kernel solvers
         self.solver = {'Bessel': KernelODE.est_K_T_ODE, 'ODE': KernelODE.solve_K_T_ODE}
 
-        # TODO: move this to a private mathod self._set_delta_ell
         # set delta_ell
-        safe_delta_ell = np.min((4, np.round(self.beta * (2 * self.lmax))))
-        try:
+        safe_delta_ell = int(np.min((4, np.round(self.beta * (2 * self.lmax)))))
+	
+        if pars['delta_ell'] == None: 
+            self.delta_ell = max(safe_delta_ell, 6)
+        else:
             self.delta_ell = pars['delta_ell']
-            assert int(self.delta_ell) == self.delta_ell
-            if self.delta_ell < safe_delta_ell:
-                warnings.warn("The minimum suggested delta_ell is : {:d}".format(int(
-                    safe_delta_ell)))
-        except KeyError:
-            self.delta_ell = safe_delta_ell
 
         # initialize other attributes
         self.pars = None  # dictionary of parameters
