@@ -103,7 +103,7 @@ class Kernel(object):
 
         # TODO: move this to a private mathod self._set_delta_ell
         # set delta_ell
-        safe_delta_ell = int(np.min((4, np.round(self.beta * (2 * self.lmax)))))
+        safe_delta_ell = int(np.max((4, np.round(self.beta * (2 * self.lmax)))))
 	
         if pars['delta_ell'] == None: 
             self.delta_ell = max(safe_delta_ell, 6)
