@@ -25,7 +25,7 @@ logger.setLevel(logging.WARN)
 N = 2  # first and last
 
 
-def dK_deta(Kstore, eta, Bmatrix):
+def dK_deta(eta, Kstore, Bmatrix):
     '''The derivative of the Kernel for index m and L'''
     K_return = mh.shift_left(Bmatrix * Kstore) - Bmatrix * mh.shift_right(Kstore)
 
@@ -182,12 +182,8 @@ def solve_K_T_ODE(pars, save_kernel=True, rtol=1.e-3, atol=1.e-6, mxstep=0):
 
         # solve the ODE for a range of ell'  between lmin=0 and lmax
         # dK_deta is the derivative of the aberration kernel with respect to eta is defined
-        sol = odeint(dK_deta, K0, eta, args=(Bmatrix,), rtol=rtol, atol=atol, mxstep=mxstep,
-                     printmessg=True)
-
-        # TODO: try scipy.ode_inv
-        # sol = solve_ivp(dK_deta, eta, K0, args=(Bmatrix,), rtol=rtol, atol=atol, mxstep=mxstep,
-        #             printmessg=True)
+        sol = solve_ivp(dK_deta, [eta[0],eta[-1]], K0, t_eval=[eta[0],eta[-1]], args=(Bmatrix,), rtol=rtol, atol=atol)
+        sol = sol.y.T
 
         # store the results in the K_T matrix
         K_T = sol[N - 1].reshape(height, width + 2)
