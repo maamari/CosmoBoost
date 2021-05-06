@@ -101,7 +101,6 @@ class Kernel(object):
         # dictionary for various kernel solvers
         self.solver = {'Bessel': KernelODE.est_K_T_ODE, 'ODE': KernelODE.solve_K_T_ODE}
 
-        # TODO: move this to a private mathod self._set_delta_ell
         # set delta_ell
         safe_delta_ell = int(np.max((4, np.round(self.beta * (2 * self.lmax)))))
 	
@@ -109,6 +108,8 @@ class Kernel(object):
             self.delta_ell = max(safe_delta_ell, 6)
         else:
             self.delta_ell = pars['delta_ell']
+        
+        print("Delta ell = ",self.delta_ell,"\n")
 
         # initialize other attributes
         self.pars = None  # dictionary of parameters
