@@ -102,7 +102,7 @@ class Kernel(object):
         self.solver = {'Bessel': KernelODE.est_K_T_ODE, 'ODE': KernelODE.solve_K_T_ODE}
 
         # set delta_ell
-        safe_delta_ell = int(np.max((4, np.round(self.beta * (2 * self.lmax)))))
+        safe_delta_ell = int(np.max((4, np.round(self.beta * (2 * self.lmax)+4))))
 	
         if pars['delta_ell'] == None: 
             self.delta_ell = max(safe_delta_ell, 6)
